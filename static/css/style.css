@@ -1,0 +1,172 @@
+/* EduScribe AI - Custom Stylesheet */
+
+/* Flashcard 3D Flip Effects */
+.perspective-1000 {
+    perspective: 1000px;
+}
+.transform-style-3d {
+    transform-style: preserve-3d;
+}
+.backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+    transform: rotateY(180deg);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.4);
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.7);
+}
+
+/* Rich Markdown Typography */
+.prose h1, .prose h2, .prose h3, .prose h4 {
+    color: inherit;
+    font-weight: 700;
+}
+.prose h2 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+}
+.prose h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+.prose p {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+}
+.prose ul, .prose ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+}
+.prose li {
+    margin-bottom: 0.375rem;
+}
+.prose code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875em;
+    padding: 0.2em 0.4em;
+    border-radius: 0.375rem;
+    background-color: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+}
+.dark .prose code {
+    background-color: rgba(99, 102, 241, 0.25);
+    color: #a5b4fc;
+}
+.prose pre {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.prose pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+}
+.prose blockquote {
+    border-left: 4px solid #6366f1;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: #4b5563;
+    background: rgba(99, 102, 241, 0.05);
+    padding: 0.75rem 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+.dark .prose blockquote {
+    color: #9ca3af;
+    background: rgba(99, 102, 241, 0.1);
+}
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.25rem 0;
+}
+.prose th, .prose td {
+    border: 1px solid rgba(156, 163, 175, 0.25);
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+}
+.prose th {
+    background-color: rgba(156, 163, 175, 0.1);
+    font-weight: 600;
+}
+
+/* Clickable Timestamp Pills in Notes */
+.timestamp-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+    background-color: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+.timestamp-pill:hover {
+    background-color: #4f46e5;
+    color: #ffffff;
+    border-color: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+}
+.dark .timestamp-pill {
+    background-color: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.4);
+}
+.dark .timestamp-pill:hover {
+    background-color: #6366f1;
+    color: #ffffff;
+}
+
+/* Shimmer Loading Animation */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+.shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+}
+
+/* KaTeX and Math Formula Styling */
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 0;
+    margin: 1rem 0;
+}
+
+/* Mermaid Mindmap SVG Viewport */
+#mindmap-render-target svg {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}

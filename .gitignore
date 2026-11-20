@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Environment Variables & Secrets
+.env
+api.txt
+*.log
+
+# Database
+notes.db
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.vscode/
+.idea/
