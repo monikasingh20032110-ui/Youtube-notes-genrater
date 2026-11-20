@@ -1,0 +1,43 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+    // Apply saved theme before paint to avoid a flash
+    (function () {
+        try {
+            var t = localStorage.getItem('eduscribe_theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            // Deliberately tight radii: nothing in the UI is pill-shaped or heavily rounded.
+            borderRadius: { none: '0', sm: '3px', DEFAULT: '4px', md: '5px', lg: '6px', xl: '6px', '2xl': '8px', '3xl': '8px', full: '9999px' },
+            extend: {
+                fontFamily: {
+                    sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+                    mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+                },
+                colors: {
+                    canvas: 'var(--canvas)',
+                    surface: 'var(--surface)',
+                    sunken: 'var(--sunken)',
+                    line: 'var(--line)',
+                    ink: 'var(--ink)',
+                    muted: 'var(--muted)',
+                    subtle: 'var(--subtle)',
+                    accent: 'var(--accent)'
+                }
+            }
+        }
+    }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
