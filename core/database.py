@@ -51,6 +51,10 @@ class NotesDatabase:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            # Migration: structured mind map (tree with definitions) alongside the legacy mermaid text
+            cols = [r[1] for r in cursor.execute("PRAGMA table_info(notes)").fetchall()]
+            if "mindmap_json" not in cols:
+                cursor.execute("ALTER TABLE notes ADD COLUMN mindmap_json TEXT")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_video_id ON notes(video_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON notes(created_at DESC)")
 
@@ -61,8 +65,8 @@ class NotesDatabase:
                 INSERT INTO notes (
                     video_id, video_url, title, channel, thumbnail_url,
                     duration_formatted, note_style, notes_markdown, notes_html,
-                    flashcards_json, quiz_json, mindmap_mermaid, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    flashcards_json, quiz_json, mindmap_mermaid, mindmap_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 note_data.get("video_id", ""),
                 note_data.get("video_url", ""),
@@ -76,6 +80,7 @@ class NotesDatabase:
                 json.dumps(note_data.get("flashcards", [])),
                 json.dumps(note_data.get("quiz", [])),
                 note_data.get("mindmap_mermaid", ""),
+                json.dumps(note_data.get("mindmap")) if note_data.get("mindmap") else None,
                 datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             ))
             return cursor.lastrowid
@@ -124,6 +129,18 @@ class NotesDatabase:
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
 
+    def update_quiz(self, note_id: int, quiz: List[Dict[str, Any]]) -> bool:
+        with self._connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE notes SET quiz_json = ? WHERE id = ?", (json.dumps(quiz), note_id))
+            return cursor.rowcount > 0
+
+    def update_mindmap(self, note_id: int, mindmap: Dict[str, Any]) -> bool:
+        with self._connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE notes SET mindmap_json = ? WHERE id = ?", (json.dumps(mindmap), note_id))
+            return cursor.rowcount > 0
+
     def delete_note(self, note_id: int) -> bool:
         with self._connection() as conn:
             cursor = conn.cursor()
@@ -140,4 +157,8 @@ class NotesDatabase:
             data["quiz"] = json.loads(data.get("quiz_json") or "[]")
         except Exception:
             data["quiz"] = []
+        try:
+            data["mindmap"] = json.loads(data["mindmap_json"]) if data.get("mindmap_json") else None
+        except Exception:
+            data["mindmap"] = None
         return data

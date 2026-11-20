@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include '_head.html' %}
+    <title>EduScribe</title>
+
+    <!-- Math, syntax highlighting, diagrams, markdown -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+</head>
+<body>
+{% include '_icons.html' %}
+
+<div id="sidebar-backdrop" class="hidden fixed inset-0 z-40 bg-black/40 lg:hidden" onclick="toggleSidebar()"></div>
+
+<!-- ================= Sidebar ================= -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[272px] max-w-[85vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 flex flex-col bg-surface border-r border-line">
+    <div class="h-14 px-4 flex items-center justify-between border-b border-line">
+        <a href="/" class="flex items-center gap-2 font-semibold tracking-tight">
+            <svg class="icon icon-lg"><use href="#i-logo"/></svg> EduScribe
+        </a>
+        <button class="btn btn-ghost btn-icon lg:hidden" onclick="toggleSidebar()" aria-label="Close menu"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="p-3 space-y-2">
+        <button onclick="goHome()" class="btn btn-outline w-full !justify-start">
+            <svg class="icon"><use href="#i-plus"/></svg> New lecture
+        </button>
+        <div class="relative">
+            <svg class="icon absolute left-3 top-1/2 -translate-y-1/2 text-subtle"><use href="#i-search"/></svg>
+            <input id="history-search-input" type="text" class="input !pl-9" placeholder="Search" aria-label="Search saved lectures">
+        </div>
+    </div>
+
+    <div class="px-4 pt-2 pb-1 flex items-center justify-between">
+        <span class="eyebrow">Library</span>
+        <span id="saved-count-badge" class="text-[11px] text-subtle"></span>
+    </div>
+    <div id="history-list" class="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5"></div>
+
+    <div class="p-3 border-t border-line flex items-center justify-between">
+        <a href="/" class="btn btn-ghost btn-sm">Home</a>
+        <button class="btn btn-ghost btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
+            <svg class="icon show-light"><use href="#i-moon"/></svg>
+            <svg class="icon show-dark"><use href="#i-sun"/></svg>
+        </button>
+    </div>
+</aside>
+
+<!-- ================= Main ================= -->
+<div class="lg:pl-[272px] min-h-screen flex flex-col">
+    <header class="lg:hidden sticky top-0 z-30 h-14 px-3 flex items-center gap-2 bg-canvas/90 backdrop-blur border-b border-line">
+        <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" aria-label="Open menu"><svg class="icon icon-lg"><use href="#i-menu"/></svg></button>
+        <span class="font-semibold tracking-tight">EduScribe</span>
+    </header>
+
+    <main class="flex-1 w-full px-4 sm:px-8 py-8 sm:py-12">
+
+        <!-- ============ Home / composer ============ -->
+        <section id="hero-section" class="max-w-2xl mx-auto pt-4 sm:pt-16">
+            <h1 class="text-[28px] sm:text-[34px] leading-tight font-semibold tracking-[-0.025em]">Paste a lecture link</h1>
+            <p class="mt-2 text-[15px] text-muted">Get notes, flashcards and a quiz. Or just start chatting with the video.</p>
+
+            <div id="error-banner" class="hidden mt-6 flex items-start gap-3 p-3 border border-line rounded-lg bg-surface text-[13px]" role="alert">
+                <svg class="icon mt-0.5" style="color: var(--bad)"><use href="#i-alert"/></svg>
+                <span id="error-message" class="flex-1"></span>
+                <button class="text-subtle hover:text-ink" onclick="hideError()" aria-label="Dismiss"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+            </div>
+
+            <div class="mt-6 border border-line rounded-2xl bg-surface p-3 sm:p-4">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <svg class="icon absolute left-3 top-1/2 -translate-y-1/2 text-subtle"><use href="#i-link"/></svg>
+                        <input id="youtube-url-input" type="text" inputmode="url" class="input !h-11 !pl-9" placeholder="https://www.youtube.com/watch?v=..." aria-label="YouTube link" autocomplete="off">
+                    </div>
+                    <button id="generate-btn" class="btn btn-lg">Generate notes</button>
+                    <button id="chat-btn" class="btn btn-outline btn-lg"><svg class="icon"><use href="#i-chat"/></svg> Chat</button>
+                </div>
+
+                <div class="mt-3 pt-3 border-t border-line flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <label class="flex items-center gap-2 text-[13px] text-muted">
+                        Style
+                        <select id="note-style-select" class="input !w-auto !h-8 text-[13px]">
+                            <option value="comprehensive">Comprehensive</option>
+                            <option value="quick">Quick revision</option>
+                            <option value="exam">Exam cram</option>
+                            <option value="code_math">Code and math</option>
+                        </select>
+                    </label>
+                    <label class="flex items-center gap-2 text-[13px] text-muted">
+                        Quiz
+                        <select id="quiz-count-home" class="input !w-auto !h-8 text-[13px]">
+                            <option>10</option><option>15</option><option>20</option><option>25</option><option>30</option>
+                        </select>
+                    </label>
+                    <button type="button" class="ml-auto text-[13px] text-muted hover:text-ink flex items-center gap-1.5" onclick="document.getElementById('custom-transcript-wrapper').classList.toggle('hidden')">
+                        <svg class="icon icon-sm"><use href="#i-file"/></svg> Paste transcript
+                    </button>
+                </div>
+
+                <div id="custom-transcript-wrapper" class="hidden mt-3 space-y-3">
+                    <p class="text-[13px] text-muted">On YouTube: open the description, choose <b class="font-medium text-ink">Show transcript</b>, select all and copy. Paste it here.</p>
+                    <textarea id="custom-transcript-input" rows="6" class="input" placeholder="Paste transcript text"></textarea>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="startNotesGeneration('', false)">Generate from pasted text</button>
+                </div>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-[13px]">
+                <span class="text-subtle">Examples</span>
+                <button class="sample-pill btn btn-outline btn-sm" data-url="https://www.youtube.com/watch?v=aircAruvnKk">Neural networks</button>
+                <button class="sample-pill btn btn-outline btn-sm" data-url="https://www.youtube.com/watch?v=fNk_zzaMoSs">Linear algebra</button>
+                <button class="sample-pill btn btn-outline btn-sm" data-url="https://www.youtube.com/watch?v=tpIctyqH29Q">Computer history</button>
+                <button class="sample-pill btn btn-outline btn-sm" data-url="https://www.youtube.com/watch?v=kqtD5dpn9C8">Python</button>
+            </div>
+
+            <div id="preview-card" class="hidden mt-5 border border-line rounded-2xl bg-surface p-3 flex flex-col sm:flex-row gap-4">
+                <img id="preview-thumb" src="" alt="" class="w-full sm:w-44 aspect-video object-cover rounded-lg border border-line">
+                <div class="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                    <h3 id="preview-title" class="font-semibold leading-snug line-clamp-2"></h3>
+                    <p class="text-[13px] text-muted"><span id="preview-channel"></span> <span class="text-subtle">&middot;</span> <span id="preview-duration" class="font-mono text-[12px]"></span></p>
+                    <p id="preview-words" class="text-[12px] text-subtle"></p>
+                    <div class="mt-2"><button id="view-cached-btn" class="hidden btn btn-outline btn-sm">Open saved notes</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Workspace ============ -->
+        <section id="workspace-section" class="hidden max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-6">
+                <div class="min-w-0">
+                    <h2 id="workspace-title" class="text-[22px] sm:text-[28px] leading-tight font-semibold tracking-[-0.02em]"></h2>
+                    <p class="mt-1.5 text-[13px] text-muted flex flex-wrap items-center gap-x-2">
+                        <span id="workspace-channel"></span>
+                        <span class="text-subtle">&middot;</span>
+                        <span id="workspace-duration" class="font-mono text-[12px]"></span>
+                        <span id="workspace-badge" class="hidden"></span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button id="copy-notes-btn" onclick="copyNotesMarkdown()" class="btn btn-outline btn-sm"><svg class="icon icon-sm"><use href="#i-copy"/></svg> Copy</button>
+                    <a id="export-md-btn" href="#" class="btn btn-outline btn-sm"><svg class="icon icon-sm"><use href="#i-download"/></svg> Markdown</a>
+                    <a id="print-btn" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm"><svg class="icon icon-sm"><use href="#i-printer"/></svg> PDF</a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px] gap-8 items-start">
+                <!-- Video -->
+                <div class="xl:order-2 xl:sticky xl:top-8">
+                    <div id="player-wrapper" class="aspect-video w-full rounded-lg overflow-hidden border border-line bg-black">
+                        <div id="youtube-player-container" class="w-full h-full"></div>
+                    </div>
+                    <p class="mt-2 text-[12px] text-subtle hidden xl:block">Click any timestamp to jump the video to that moment.</p>
+
+                    <nav id="toc-card" class="hidden xl:block mt-5" aria-label="On this page">
+                        <div class="eyebrow mb-2">On this page</div>
+                        <ul id="toc-list" class="toc"></ul>
+                    </nav>
+                </div>
+
+                <!-- Tabs -->
+                <div class="xl:order-1 min-w-0">
+                    <div class="tabs" role="tablist">
+                        <button id="tab-btn-notes" class="tab" role="tab" aria-selected="true" onclick="switchTab('notes')"><svg class="icon"><use href="#i-notes"/></svg> Notes</button>
+                        <button id="tab-btn-flashcards" class="tab" role="tab" aria-selected="false" onclick="switchTab('flashcards')"><svg class="icon"><use href="#i-cards"/></svg> Flashcards</button>
+                        <button id="tab-btn-quiz" class="tab" role="tab" aria-selected="false" onclick="switchTab('quiz')"><svg class="icon"><use href="#i-quiz"/></svg> Quiz</button>
+                        <button id="tab-btn-mindmap" class="tab" role="tab" aria-selected="false" onclick="switchTab('mindmap')"><svg class="icon"><use href="#i-map"/></svg> Map</button>
+                        <button id="tab-btn-chat" class="tab" role="tab" aria-selected="false" onclick="switchTab('chat')"><svg class="icon"><use href="#i-chat"/></svg> Chat</button>
+                    </div>
+
+                    <!-- Notes -->
+                    <div id="tab-pane-notes" class="pt-6">
+                        <div id="notes-status" class="hidden space-y-4 py-2">
+                            <div class="flex items-center gap-3 text-[14px] text-muted"><div class="spinner"></div><span id="loading-step-text">Generating notes. This takes a minute or two.</span></div>
+                            <div class="indeterminate"></div>
+                            <div class="space-y-3 pt-4">
+                                <div class="skeleton h-5 w-1/3"></div><div class="skeleton h-4 w-full"></div><div class="skeleton h-4 w-11/12"></div><div class="skeleton h-4 w-4/5"></div>
+                                <div class="skeleton h-5 w-2/5 mt-6"></div><div class="skeleton h-4 w-full"></div><div class="skeleton h-4 w-10/12"></div>
+                            </div>
+                        </div>
+                        <div id="notes-empty" class="hidden py-12 text-center text-[14px] text-muted">
+                            Notes are not generated for this lecture yet.
+                            <div class="mt-4"><button class="btn btn-sm" onclick="generateFromWorkspace()">Generate notes</button></div>
+                        </div>
+                        <article id="notes-content-container" class="notes"></article>
+                    </div>
+
+                    <!-- Flashcards -->
+                    <div id="tab-pane-flashcards" class="hidden pt-6 space-y-4">
+                        <div id="flashcard-area" class="space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-[13px]">
+                                <div class="flex items-center gap-3 font-mono text-muted">
+                                    <span id="flashcard-counter">1 / 1</span>
+                                    <span class="text-subtle">&middot;</span>
+                                    <span id="fc-known">0 known</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button id="fc-review-toggle" onclick="toggleReviewOnly()" class="btn btn-ghost btn-sm" aria-pressed="false">Review only</button>
+                                    <button onclick="shuffleFlashcards()" class="btn btn-ghost btn-sm"><svg class="icon icon-sm"><use href="#i-shuffle"/></svg> Shuffle</button>
+                                    <button onclick="resetFlashcardProgress()" class="btn btn-ghost btn-sm" title="Clear known cards"><svg class="icon icon-sm"><use href="#i-undo"/></svg> Reset</button>
+                                </div>
+                            </div>
+                            <div class="fc-progress"><div id="fc-progress-bar" style="width:0%"></div></div>
+
+                            <div id="flashcard-container" tabindex="0" role="button" aria-label="Flashcard. Press Space to flip, arrow keys to move."
+                                 class="perspective-1000 w-full h-[300px] sm:h-[340px] cursor-pointer select-none focus:outline-none focus-visible:ring-2 rounded-lg" onclick="flipFlashcard()">
+                                <div id="flashcard-inner" class="transform-style-3d relative w-full h-full transition-transform duration-500">
+                                    <div class="fc-face backface-hidden">
+                                        <div class="fc-meta"><span>Question</span><span>Tap to flip</span></div>
+                                        <div class="fc-body"><p id="fc-question" class="fc-text"></p></div>
+                                        <div class="h-4"></div>
+                                    </div>
+                                    <div class="fc-face back backface-hidden rotate-y-180">
+                                        <div class="fc-meta"><span>Answer</span><span>Tap to flip</span></div>
+                                        <div class="fc-body"><p id="fc-answer" class="fc-text"></p></div>
+                                        <div class="h-4"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="seg">
+                                <button id="fc-prev" onclick="prevFlashcard()" aria-label="Previous card"><svg class="icon"><use href="#i-chevron-left"/></svg><span class="label">Previous</span></button>
+                                <button class="primary" onclick="flipFlashcard()" aria-label="Flip card"><svg class="icon"><use href="#i-flip"/></svg><span class="label">Flip</span></button>
+                                <button id="fc-next" onclick="nextFlashcard()" aria-label="Next card"><span class="label">Next</span><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="markFlashcard(false)" class="btn btn-outline !h-10"><svg class="icon"><use href="#i-refresh"/></svg> Again</button>
+                                <button onclick="markFlashcard(true)" class="btn btn-outline !h-10"><svg class="icon"><use href="#i-check"/></svg> Got it</button>
+                            </div>
+                            <p class="hidden sm:block text-center text-[12px] text-subtle"><span class="kbd">Space</span> flip &nbsp; <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> move &nbsp; <span class="kbd">K</span> got it &nbsp; <span class="kbd">J</span> again</p>
+                        </div>
+                        <div id="flashcard-empty" class="hidden py-12 text-center text-[14px] text-muted">No flashcards yet.</div>
+                    </div>
+
+                    <!-- Quiz -->
+                    <div id="tab-pane-quiz" class="hidden pt-6 space-y-5">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="mr-auto">
+                                <div id="quiz-score-badge" class="text-[13px] font-mono text-muted">0 / 0</div>
+                            </div>
+                            <label class="flex items-center gap-2 text-[13px] text-muted">
+                                Questions
+                                <select id="quiz-count-select" class="input !w-auto !h-8 text-[13px]">
+                                    <option>10</option><option>15</option><option>20</option><option>25</option><option>30</option>
+                                </select>
+                            </label>
+                            <button id="regen-quiz-btn" onclick="regenerateQuiz()" class="btn btn-outline btn-sm"><svg class="icon icon-sm"><use href="#i-refresh"/></svg> Regenerate</button>
+                            <button id="retake-quiz-btn" onclick="retakeQuiz()" class="hidden btn btn-outline btn-sm">Retake</button>
+                        </div>
+                        <div id="quiz-loading" class="hidden space-y-3"><div class="indeterminate"></div><p class="text-[13px] text-muted">Writing questions...</p></div>
+                        <div id="quiz-summary" class="hidden q-card"></div>
+                        <div id="quiz-questions-list" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Map -->
+                    <div id="tab-pane-mindmap" class="hidden pt-6">
+                        <div id="mm-wrap" class="mm-wrap">
+                            <div class="mm-toolbar">
+                                <button id="mm-zoom-out" class="btn btn-outline btn-icon" aria-label="Zoom out" title="Zoom out"><svg class="icon"><use href="#i-minus"/></svg></button>
+                                <span id="mm-zoom-label" class="mm-zoom">100%</span>
+                                <button id="mm-zoom-in" class="btn btn-outline btn-icon" aria-label="Zoom in" title="Zoom in"><svg class="icon"><use href="#i-plus"/></svg></button>
+                                <button id="mm-fit" class="btn btn-outline btn-sm" title="Fit to screen (0)"><svg class="icon icon-sm"><use href="#i-fit"/></svg><span class="hidden sm:inline">Fit</span></button>
+                                <button id="mm-expand" class="btn btn-outline btn-sm" title="Expand or collapse every branch"><svg class="icon icon-sm"><use href="#i-expand"/></svg><span>Expand all</span></button>
+                                <button id="mm-rebuild" class="btn btn-ghost btn-sm ml-auto" title="Rebuild the map"><svg class="icon icon-sm"><use href="#i-refresh"/></svg><span class="hidden sm:inline">Rebuild</span></button>
+                            </div>
+                            <div id="mm-viewport" class="mm-viewport" tabindex="0" aria-label="Concept map. Scroll to zoom, drag to pan.">
+                                <svg id="mm-svg" width="100%" height="100%"><g id="mm-g"></g></svg>
+                                <div id="mm-status" class="mm-status hidden"></div>
+                            </div>
+                            <div id="mm-card" class="mm-card hidden" role="tooltip"></div>
+                            <p class="mm-hint">Scroll to zoom &middot; drag to pan &middot; hover a topic for its definition &middot; use the dot to collapse a branch</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat -->
+                    <div id="tab-pane-chat" class="hidden pt-6">
+                        <div class="chat-wrap">
+                            <div id="chat-messages" class="chat-scroll"></div>
+                            <form id="chat-form" class="chat-composer" autocomplete="off">
+                                <textarea id="chat-input" rows="1" placeholder="Ask about this lecture" aria-label="Message"></textarea>
+                                <button id="chat-send" type="submit" class="btn btn-icon !h-10 !w-10" aria-label="Send"><svg class="icon"><use href="#i-send"/></svg></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="sel-pop" class="sel-pop hidden" role="toolbar" aria-label="Selection actions">
+    <button type="button" data-act="ask"><svg class="icon icon-sm"><use href="#i-chat"/></svg> Ask tutor</button>
+    <button type="button" data-act="simplify"><svg class="icon icon-sm"><use href="#i-zap"/></svg> Simplify</button>
+    <button type="button" data-act="quiz"><svg class="icon icon-sm"><use href="#i-quiz"/></svg> Quiz me</button>
+    <button type="button" data-act="copy"><svg class="icon icon-sm"><use href="#i-copy"/></svg></button>
+</div>
+
+<script src="/static/js/mindmap.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -150,7 +150,7 @@
     </style>
 </head>
 <body>
-    <button class="no-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button class="no-print" onclick="window.print()">Print / Save as PDF</button>
 
     <div class="header-bar">
         <span class="badge">EduScribe AI • Lecture Notes</span>
@@ -170,7 +170,7 @@
     {% if note.flashcards and note.flashcards | length > 0 %}
     <div style="page-break-before: always; margin-top: 30px;">
         <h2 style="font-size: 18px; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            🗂️ Active Recall Flashcards
+            Flashcards
         </h2>
         <div style="display: grid; gap: 12px; margin-top: 14px;">
             {% for fc in note.flashcards %}
@@ -186,7 +186,7 @@
     {% if note.quiz and note.quiz | length > 0 %}
     <div style="margin-top: 30px;">
         <h2 style="font-size: 18px; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            🎯 Self-Assessment Quiz
+            Quiz
         </h2>
         {% for q in note.quiz %}
         <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-top: 12px; background: #fff;">
@@ -197,7 +197,7 @@
                 {% endfor %}
             </ul>
             <p style="margin: 0; font-size: 12px; color: #059669; font-weight: 500;">
-                ✓ Correct Answer: Option {{ q.correct_answer + 1 }} &mdash; <em>{{ q.explanation }}</em>
+                Correct answer: Option {{ q.correct_answer + 1 }} &mdash; <em>{{ q.explanation }}</em>
             </p>
         </div>
         {% endfor %}
