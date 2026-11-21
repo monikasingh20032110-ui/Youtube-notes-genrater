@@ -145,7 +145,10 @@ function seekVideoTo(seconds) {
         state.player.seekTo(seconds, true);
         state.player.playVideo();
         const el = $('player-wrapper');
-        if (el && window.innerWidth < 1280) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (el && window.innerWidth < 1280 && !el.classList.contains('mini')) {
+            const r = el.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > window.innerHeight) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 }
 
@@ -298,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initYouTubeAPI();
     MindMap.init({ onSeek: seekVideoTo });
     initSelectionToolbar();
+    initMiniPlayer();
     initEventListeners();
     initHistorySearch();
     loadHistory();
@@ -511,7 +515,7 @@ async function startChatMode(url) {
         setHeader({ title: m.title, channel: m.author_name, duration: state._lastExtract ? state._lastExtract.duration_formatted : '', videoId: state.currentVideoId, noteId: null });
         $('notes-empty').classList.remove('hidden');
         markActiveHistory(null);
-        switchTab('chat');
+        switchTab('chat', { scroll: true });
         $('chat-input').focus({ preventScroll: true });
     } catch (err) {
         showError(err.message);
@@ -646,7 +650,7 @@ async function loadNoteById(noteId) {
 /* ------------------------------------------------------------------ *
  * Tabs
  * ------------------------------------------------------------------ */
-function switchTab(tabId) {
+function switchTab(tabId, opts = {}) {
     TAB_IDS.forEach((t) => {
         const pane = $(`tab-pane-${t}`);
         const btn = $(`tab-btn-${t}`);
@@ -654,11 +658,11 @@ function switchTab(tabId) {
         if (btn) btn.setAttribute('aria-selected', t === tabId ? 'true' : 'false');
     });
     if (tabId === 'mindmap') ensureMindmap();
-    $('toc-card').classList.toggle('xl:block', tabId === 'notes');
-    $('toc-card').classList.toggle('hidden', tabId !== 'notes' || !$('toc-list').children.length);
+    $('toc-card').classList.toggle('toc-off', tabId !== 'notes' || !$('toc-list').children.length);
     document.body.classList.toggle('chat-open', tabId === 'chat');
-    if (tabId === 'chat') { window.scrollTo({ top: 0 }); scrollChatToBottom(); }
+    if (tabId === 'chat') { if (window.innerWidth >= 1280) window.scrollTo({ top: 0 }); scrollChatToBottom(); }
     hideSelectionToolbar();
+    if (opts.scroll) scrollToTabs();
 }
 
 /* ------------------------------------------------------------------ *
@@ -1114,7 +1118,7 @@ function buildToc() {
     if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
     list.innerHTML = '';
     const headings = [...$('notes-content-container').querySelectorAll('h2, h3')];
-    if (headings.length < 3) { card.classList.add('hidden'); return; }
+    if (headings.length < 3) { card.classList.add('toc-off'); return; }
 
     const links = new Map();
     headings.forEach((h, i) => {
@@ -1133,7 +1137,7 @@ function buildToc() {
         list.appendChild(li);
         links.set(h, a);
     });
-    if (!$('tab-pane-notes').classList.contains('hidden')) card.classList.remove('hidden');
+    card.classList.toggle('toc-off', $('tab-pane-notes').classList.contains('hidden'));
 
     tocObserver = new IntersectionObserver((entries) => {
         entries.forEach((en) => {
@@ -1199,4 +1203,51 @@ function initSelectionToolbar() {
             sendChatMessage(prompts[act], titles[act], text);
         });
     });
+}
+
+
+/* ------------------------------------------------------------------ *
+ * Responsive helpers: scroll to tabs, floating mini player
+ * ------------------------------------------------------------------ */
+function stickyOffset() {
+    if (window.innerWidth >= 1280) return 0;
+    return window.innerWidth < 1024 ? 56 : 0;   // mobile header height
+}
+
+/** Below xl the video sits above the tabs: bring the active tab content into view. */
+function scrollToTabs() {
+    if (window.innerWidth >= 1280) return;
+    const column = $('tab-btn-notes').closest('.tabs').parentElement;
+    const top = column.getBoundingClientRect().top + window.scrollY - stickyOffset();
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
+
+function setMiniPlayer(on) {
+    const wrap = $('player-wrapper');
+    const slot = $('player-slot');
+    if (on && !wrap.classList.contains('mini')) {
+        slot.style.height = wrap.offsetHeight + 'px';   // keep the page from jumping
+        wrap.classList.add('mini');
+    } else if (!on && wrap.classList.contains('mini')) {
+        wrap.classList.remove('mini');
+        slot.style.height = '';
+    }
+}
+
+function dismissMiniPlayer() {
+    state.miniDismissed = true;
+    setMiniPlayer(false);
+}
+
+function initMiniPlayer() {
+    const slot = $('player-slot');
+    const io = new IntersectionObserver(([entry]) => {
+        const small = window.innerWidth < 1280;
+        const scrolledPast = entry.boundingClientRect.bottom < stickyOffset() + 4;
+        if (entry.isIntersecting) state.miniDismissed = false;
+        const hasVideo = !slot.parentElement.parentElement.classList.contains('hidden');
+        setMiniPlayer(small && scrolledPast && !entry.isIntersecting && !state.miniDismissed && hasVideo);
+    }, { threshold: 0, rootMargin: `-${stickyOffset()}px 0px 0px 0px` });
+    io.observe(slot);
+    window.addEventListener('resize', () => { if (window.innerWidth >= 1280) setMiniPlayer(false); });
 }

@@ -26,7 +26,7 @@
 <main class="flex-1">
     <!-- Hero -->
     <section class="max-w-3xl mx-auto px-5 pt-16 sm:pt-24 pb-14 text-center">
-        <h1 class="text-[34px] sm:text-[52px] leading-[1.08] font-semibold tracking-[-0.03em]">
+        <h1 class="text-[30px] min-[400px]:text-[34px] sm:text-[52px] leading-[1.08] font-semibold tracking-[-0.03em]">
             Study notes from any<br class="hidden sm:inline"> YouTube lecture.
         </h1>
         <p class="mt-5 text-[16px] sm:text-[17px] text-muted max-w-xl mx-auto leading-relaxed">
@@ -39,11 +39,11 @@
                     <svg class="icon absolute left-3 top-1/2 -translate-y-1/2 text-subtle"><use href="#i-link"/></svg>
                     <input id="start-url" type="text" inputmode="url" class="input !h-11 !pl-9" placeholder="https://www.youtube.com/watch?v=..." aria-label="YouTube link">
                 </div>
-                <div class="flex gap-2">
-                    <button type="submit" data-mode="notes" class="btn btn-lg flex-1 sm:flex-none">
+                <div class="flex flex-col min-[420px]:flex-row gap-2">
+                    <button type="submit" data-mode="notes" class="btn btn-lg w-full min-[420px]:w-auto min-[420px]:flex-1 sm:flex-none">
                         Generate notes
                     </button>
-                    <button type="button" id="try-chat" class="btn btn-outline btn-lg flex-1 sm:flex-none">
+                    <button type="button" id="try-chat" class="btn btn-outline btn-lg w-full min-[420px]:w-auto min-[420px]:flex-1 sm:flex-none">
                         <svg class="icon"><use href="#i-chat"/></svg> Try as chat
                     </button>
                 </div>

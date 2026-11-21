@@ -9,7 +9,8 @@
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const NODE_H = 32;
     const ROW_GAP = 10;
-    const COL_GAP = 72;
+    let COL_GAP = 72;
+    let MAX_LABEL_W = 230;
     const MIN_K = 0.2;
     const MAX_K = 3;
 
@@ -49,7 +50,7 @@
 
     function textWidth(label, depth) {
         const per = depth === 0 ? 8.2 : 7.1;
-        return Math.max(depth === 0 ? 150 : 96, Math.min(230, Math.round(label.length * per + 34)));
+        return Math.max(depth === 0 ? Math.min(150, MAX_LABEL_W) : 96, Math.min(MAX_LABEL_W, Math.round(label.length * per + 34)));
     }
 
     /* ---------------- layout ---------------- */
@@ -324,7 +325,15 @@
         allOpen = false;
         $('mm-expand').querySelector('span').textContent = 'Expand all';
         root = prepare(JSON.parse(JSON.stringify(tree)), 0, null);
-        autoExpand(root);
+        // On narrow screens use tighter columns and start with topics only
+        const narrow = els.viewport.getBoundingClientRect().width < 600;
+        COL_GAP = narrow ? 36 : 72;
+        MAX_LABEL_W = narrow ? 150 : 230;
+        if (narrow) {
+            (root.children || []).forEach((t) => { if ((t.children || []).length) t._collapsed = true; });
+        } else {
+            autoExpand(root);
+        }
         draw();
         // Fit once layout has dimensions (the tab may have just become visible)
         requestAnimationFrame(() => requestAnimationFrame(fit));
